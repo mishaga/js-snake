@@ -8,39 +8,37 @@ class Field {
 
     constructor(size) {
         this.size = size;
-        const last = size - 1;
-        this.matrix = new Array(size);
-        for (let i = 0; i < size; i++) {
-            if (i === 0 || i === last) {
-                this.matrix[i] = new Array(size).fill(Field.border_code);
-            }
-            else {
-                this.matrix[i] = new Array(size).fill(Field.empty_code);
-                this.matrix[i][0] = this.matrix[i][last] = Field.border_code;
-            }
-        }
+
+        this.matrix = [];
+        this.borders = [];
+    }
+
+    set_stage(stage) {
+        this.#clear_matrix();
+        this.borders = stage.get_borders();
+        this.borders.forEach(point => {
+            this.matrix[point.y][point.x] = Field.border_code;
+        });
     }
 
     add_snake(snake) {
         // add snake to the matrix
-        for (let i in snake.coordinates) {
-            const x = snake.coordinates[i][0];
-            const y = snake.coordinates[i][1];
-            this.matrix[y][x] = Snake.code;
-        }
+        snake.coordinates.forEach(point => {
+            this.matrix[point.y][point.x] = Snake.code;
+        });
     }
 
     add_apple(apple) {
-        this.matrix[apple.y][apple.x] = Apple.code;
+        if (apple) {
+            this.matrix[apple.y][apple.x] = Apple.code;
+        }
     }
 
     is_cell_available(point) {
         // Check if it's possible to move to the cell.
         // The cell should be empty or has apple.
         // Other words, it shouldn't contain either snake or border.
-        const x = point[0];
-        const y = point[1];
-        return [Field.border_code, Snake.code].indexOf(this.matrix[y][x]) === -1;
+        return [Field.border_code, Snake.code].indexOf(this.matrix[point.y][point.x]) === -1;
     }
 
     get_random_free_cell() {
@@ -48,23 +46,24 @@ class Field {
         const free_cells = [];
         for (let i = 0; i < this.size; i++) {
             for (let j = 0; j < this.size; j++) {
-                if (this.is_cell_available([j, i])) {
-                    free_cells.push([j, i]);
+                const cell = new Cell(j, i);
+                if (this.is_cell_available(cell)) {
+                    free_cells.push(cell);
                 }
             }
         }
-        const idx = Math.floor(Math.random() * free_cells.length) + 1;
+        const idx = Math.floor(Math.random() * free_cells.length);
         return free_cells[idx];
     }
 
-    save_snake_out(x, y) {
+    save_snake_out(point) {
         // "Cut" the snake tail when it leaves the cell.
-        this.matrix[y][x] = Field.empty_code;
+        this.matrix[point.y][point.x] = Field.empty_code;
     }
 
-    save_snake_in(x, y) {
+    save_snake_in(point) {
         // "Move" the snake head when it's on the cell.
-        this.matrix[y][x] = Snake.code;
+        this.matrix[point.y][point.x] = Snake.code;
     }
 
     draw(ctx) {
@@ -72,10 +71,11 @@ class Field {
         this.#draw_field(ctx);
     }
 
-    #get_cell_coordinates(i, j) {
-        const x = j * Field.cell_size;
-        const y = i * Field.cell_size;
-        return [x, y];
+    #clear_matrix(){
+        this.matrix = new Array(this.size);
+        for (let i = 0; i < this.size; i++) {
+            this.matrix[i] = new Array(this.size).fill(Field.empty_code);
+        }
     }
 
     #draw_cell_net(ctx) {
@@ -97,22 +97,20 @@ class Field {
     }
 
     #draw_field(ctx) {
-        const width_height = Field.cell_size - Field.line_width;
         const what_to_draw = [Field.border_code, Snake.code, Apple.code];
         const colours = [Field.border_colour, Snake.colour, Apple.colour];
-        let center;
-        let idx;
         for (let i = 0; i < this.size; i++) {
             for (let j = 0; j < this.size; j++) {
-                idx = what_to_draw.indexOf(this.matrix[i][j]);
+                const idx = what_to_draw.indexOf(this.matrix[i][j]);
                 if (idx > -1) {
-                    center = this.#get_cell_coordinates(i, j);
-                    ctx.fillStyle = colours[idx];
+                    const cell = new Cell(j, i);
                     ctx.beginPath();
+                    ctx.fillStyle = colours[idx];
                     ctx.rect(
-                        center[0] + Field.line_width,
-                        center[1] + Field.line_width,
-                        width_height, width_height
+                        cell.get_canvas_x(),
+                        cell.get_canvas_y(),
+                        cell.get_canvas_width(),
+                        cell.get_canvas_height(),
                     );
                     ctx.fill();
                 }

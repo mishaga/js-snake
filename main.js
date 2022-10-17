@@ -1,9 +1,12 @@
 const canvas = document.getElementById('snake-game');
 
-let game = new Game(25, 3, canvas);
+const initial_field_size = 25;
+const initial_snake_length = 3;
+
+let game = new Game(initial_field_size, initial_snake_length, canvas);
 game.init();
 
-document.onkeydown = (event) => {
+document.onkeydown = event => {
     switch (game.status) {
         case 'READY':
             if (event.code === 'Enter') {
@@ -27,8 +30,9 @@ document.onkeydown = (event) => {
             }
             break;
         case 'OVER':
+        case 'WIN':
             if (event.code === 'Escape') {
-                game = new Game(25, 3, canvas);
+                game = new Game(initial_field_size, initial_snake_length, canvas);
                 game.init();
             }
             break;
