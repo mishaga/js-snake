@@ -1,4 +1,4 @@
-# js-snake
+# snake
 
 Implementation of classic Snake game on Vanilla JS
 
