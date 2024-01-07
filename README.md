@@ -1,6 +1,6 @@
 # snake
 
-Implementation of classic Snake game on Vanilla JS
+Implementation of the classic Snake game in pure JavaScript.
 
 You can try it here: https://snake.mishaga.com
 
